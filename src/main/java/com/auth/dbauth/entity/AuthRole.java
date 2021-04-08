@@ -15,8 +15,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class AuthRole {
+  
   @Id
-  @Column(name = "role_id")
+  @Column(name = "roleId")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 

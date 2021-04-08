@@ -1,14 +1,11 @@
 package com.auth.dbauth.core.service;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.auth.dbauth.core.util.CoreUtil;
 import com.auth.dbauth.entity.AuthRole;
 import com.auth.dbauth.entity.AuthUser;
 import com.auth.dbauth.repository.RoleRepository;
@@ -25,6 +22,9 @@ public class BootstrapService {
   private UserRepository userRepository;
   
   @Autowired
+  private UserService userService;
+  
+  @Autowired
   private BCryptPasswordEncoder encoder;
 
   public void execute() {
@@ -37,7 +37,7 @@ public class BootstrapService {
     Arrays.asList(roles).forEach(roleName -> {
       String roleNameStr = roleName.getDescription();
 
-      Optional<AuthRole> roleOp = roleRepository.findByRoleName(roleNameStr);
+      Optional<AuthRole> roleOp = roleRepository.findByName(roleNameStr);
       if (roleOp.isPresent()) {
         // role is already present don't do anything
       } else {
@@ -55,16 +55,12 @@ public class BootstrapService {
   
   private void createUser() {
     if (userRepository.count() == 0) {
-        List<AuthRole> roleList = roleRepository.findAll();
-        if (CoreUtil.isNonEmpty(roleList)) {
-            Set<AuthRole> roles = new HashSet<>();
-            roleList.forEach(role -> {
-                roles.add(role);
-            });
-            AuthUser user = AuthUser.builder().enabled(true).username("riddhik@gmail.com")
-                    .password(encoder.encode("abcd123")).roles(roles).build();
-            userRepository.save(user);
-        }
+      List<AuthRole> roleList = roleRepository.findAll();
+
+      AuthUser user = AuthUser.builder().enabled(true).username("riddhik@gmail.com")
+          .email("riddhik@gmail.com").password(encoder.encode("abcd123")).roles(roleList).build();
+      userService.saveUser(user);
     }
-}
+
+  }
 }
