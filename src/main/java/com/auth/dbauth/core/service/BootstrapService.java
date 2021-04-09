@@ -8,8 +8,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.auth.dbauth.entity.AuthRole;
 import com.auth.dbauth.entity.AuthUser;
+import com.auth.dbauth.entity.Privilege;
+import com.auth.dbauth.repository.PrivilageRepository;
 import com.auth.dbauth.repository.RoleRepository;
 import com.auth.dbauth.repository.UserRepository;
+import com.auth.dbauth.util.PermEnum;
 import com.auth.dbauth.util.RoleEnum;
 
 @Service
@@ -22,6 +25,9 @@ public class BootstrapService {
   private UserRepository userRepository;
   
   @Autowired
+  private PrivilageRepository privilageRepository;
+  
+  @Autowired
   private UserService userService;
   
   @Autowired
@@ -31,6 +37,8 @@ public class BootstrapService {
     createRole();
     createUser();
   }
+
+  
 
   private void createRole() {
     RoleEnum roles[] = RoleEnum.values();
@@ -47,6 +55,19 @@ public class BootstrapService {
           isAdmin = true;
         }
         role = AuthRole.builder().name(roleNameStr).isAdmin(isAdmin).build();
+        Privilege privilege = privilageRepository.findByAuthority(PermEnum.ADD.getDescription());
+        if (privilege == null)
+          privilege = privilageRepository.save(new Privilege(PermEnum.ADD.getDescription()));
+        role.getPrivileges().add(privilege);
+        privilege = privilageRepository.findByAuthority(PermEnum.UPDATE.getDescription());
+        if (privilege == null)
+          privilege = privilageRepository.save(new Privilege(PermEnum.UPDATE.getDescription()));
+        role.getPrivileges().add(privilege);
+        privilege = privilageRepository.findByAuthority(PermEnum.DELETE.getDescription());
+        if (privilege == null)
+          privilege = privilageRepository.save(new Privilege(PermEnum.DELETE.getDescription()));
+        if (privilege == null)
+          privilege = privilageRepository.save(new Privilege(PermEnum.INSERT.getDescription()));
         roleRepository.save(role);
       }
     });

@@ -18,12 +18,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.auth.dbauth.core.service.UserService;
 import com.auth.dbauth.entity.AuthRole;
 import com.auth.dbauth.entity.AuthUser;
+import com.auth.dbauth.entity.Privilege;
 import com.auth.dbauth.exception.DataFoundException;
+import com.auth.dbauth.repository.PrivilageRepository;
 import com.auth.dbauth.repository.RoleRepository;
 import com.auth.dbauth.repository.UserRepository;
 import com.auth.dbauth.server.dto.UserRegistrationDto;
 import com.auth.dbauth.server.dto.UserRoleDto;
 import com.auth.dbauth.server.dto.UserUpdateRoleDTO;
+import com.auth.dbauth.util.PermEnum;
 import com.auth.dbauth.util.RoleEnum;
 
 
@@ -39,6 +42,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
   /** The password encoder. */
   @Autowired
   private BCryptPasswordEncoder passwordEncoder;
+  
+  @Autowired
+  private PrivilageRepository privilageRepository;
+
 
   @Override
   public Optional<AuthUser> findByEmail(String email) {
@@ -165,10 +172,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     if (userOptional.isPresent()) {
       throw new DataFoundException("emailExist,User exists by email");
     }
+    AuthRole authRole = roleRepository.findByName(RoleEnum.REP.getDescription()).get();
+    Privilege privilege = privilageRepository.findByAuthority("Add");
+    if (privilege == null)
+        privilege = privilageRepository.save(new Privilege("Add"));
+    authRole.getPrivileges().add(privilege);
     AuthUser user = AuthUser.builder().email(request.getEmail()).enabled(true)
         .fullname(request.getFullName()).password(passwordEncoder.encode(request.getPassword()))
         .roles(Collections
-            .singletonList(roleRepository.findByName(RoleEnum.REP.getDescription()).get()))
+            .singletonList(authRole))
         .build();
 
 
@@ -195,6 +207,28 @@ public class UserServiceImpl implements UserService, UserDetailsService {
       userRepository.save(authUser);
 
     }
+  }
+  
+  
+  public void createAdmin(UserRegistrationDto request) {
+    AuthRole role = roleRepository.findByName(RoleEnum.ADMIN.getDescription()).get();
+
+    Privilege privilege = privilageRepository.findByAuthority(PermEnum.ADD.getDescription());
+    if (privilege == null)
+      privilege = privilageRepository.save(new Privilege(PermEnum.ADD.getDescription()));
+    role.getPrivileges().add(privilege);
+    privilege = privilageRepository.findByAuthority(PermEnum.UPDATE.getDescription());
+    if (privilege == null)
+      privilege = privilageRepository.save(new Privilege(PermEnum.UPDATE.getDescription()));
+    role.getPrivileges().add(privilege);
+    privilege = privilageRepository.findByAuthority(PermEnum.DELETE.getDescription());
+    if (privilege == null)
+      privilege = privilageRepository.save(new Privilege(PermEnum.DELETE.getDescription()));
+    role.getPrivileges().add(privilege);
+    AuthUser user = AuthUser.builder().email(request.getEmail()).enabled(true)
+        .fullname(request.getFullName()).password(passwordEncoder.encode(request.getPassword()))
+        .roles(Collections.singletonList(role)).build();
+    userRepository.save(user);
   }
 
 }
