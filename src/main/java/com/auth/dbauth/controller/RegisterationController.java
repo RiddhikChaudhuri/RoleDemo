@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import com.auth.dbauth.core.service.UserService;
 import com.auth.dbauth.entity.AuthUser;
 import com.auth.dbauth.exception.DataFoundException;
@@ -19,7 +18,7 @@ public class RegisterationController {
   
   
   
-  @PostMapping("/process_register")
+  @GetMapping("/process_register")
   public String processRegister(UserRegistrationDto user) throws DataFoundException {
     this.userService.register(user);
 
